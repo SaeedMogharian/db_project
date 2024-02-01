@@ -118,7 +118,7 @@ class Advisor(Professor):
 
 
 class Term(models.Model):
-    numerical_id = models.IntegerField(unique=True, primary_key=True)
+    number = models.IntegerField(unique=True, primary_key=True)
 
 
 class Event(models.Model):
@@ -184,6 +184,10 @@ class Student(UserAccount):
     def get_enrollments_for_term(self, term_number):
         enrollments = Enrollment.objects.filter(student=self, class_course__term__number=term_number)
         return enrollments
+    def avg_term(self,term_number) :
+        a = self.get_enrollments_for_term(term_number)
+        b = list(a.values(grade))
+        return sum(b)/len(b)
 
 
 # Student, Class(term, course, professor)
