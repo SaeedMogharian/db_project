@@ -188,20 +188,28 @@ class Student(UserAccount):
         a = self.get_enrollments_for_term(term_number)
         b = list(a.values(grade))
         return sum(b)/len(b)
-
+    def term_courses(self,term_number) :
+        return self.get_enrollments_for_term(term_number)
+    def get_messages(self,advisor_id_input) :
+        avdisor_message = Advisor.objects.filter(advisor_id=advisor_id_input)
+        messages = AdvisingMessage.objects.filter(student=self, advisor = avdisor_message)
+        return messages
+    def student_events(self,term_obj) :
+        term_events = TermEvent.objects.filter(term = term_obj)
+        return term_events
 
 # Student, Class(term, course, professor)
 class Enrollment(models.Model):
     student = models.ForeignKey(Student, related_name="enrollments", on_delete=models.CASCADE)
     class_course = models.ForeignKey(Class, related_name="enrollments", on_delete=models.CASCADE)
-    grade = models.DecimalField(max_digits=5, decimal_places=2)
+    grade = models.DecimalField(max_digits=5, decimal_places=2,null = True)
 
 
 
 
 class AdvisingMessage(models.Model):
     content = models.TextField()
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student,related_name="advising_message", on_delete=models.CASCADE)
     advisor = models.ForeignKey(Advisor, on_delete=models.CASCADE)
     created_time = models.DateTimeField(auto_now_add=True)
 
