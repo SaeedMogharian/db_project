@@ -13,19 +13,29 @@ class PhoneNumber(models.Model):
 
 class Major(models.Model):
     name = models.CharField(max_length=255)
-    requierd_credit = models.IntegerField(max_length=10)
-    cataloge = models.FileField(upload_to="/static/majors")
+    requierd_credit = models.IntegerField()
 
 
+# Chart
+class Chart(models.Model):
+    major = models.ForeignKey
+
+
+# Major
 class EducationalStat(models.Model):
     start_date = models.DateField()
     graduation_date = models.DateField()
-    major = models.ForeignKey(Major, on_delete=models.SET_NULL)
+    major = models.ForeignKey(Major, on_delete=models.CASCADE)
     degree = models.CharField(max_length=255)
     avg_grade = models.DecimalField(max_digits=5, decimal_places=2)
     institution_name = models.CharField(max_length=255)
 
 
+class Department(models.Model):
+    name = models.CharField(max_length=255)
+
+
+# EduStat
 class UserAccount(models.Model):
     class Meta:
         verbose_name = "User"
@@ -71,16 +81,14 @@ class UserAccount(models.Model):
         return f"{self.first_name} {self.last_name}"
 
 
-class Department(models.Model):
-    name = models.CharField(max_length=255)
-
-
+# department, major
 class Course(models.Model):
     name = models.CharField(max_length=255)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
-    major = models.ForeignKey(Major, blank=True, on_delete=models.SET_DEFAULT)
-    cred = models.IntegerField(default=1, max=10)
-    description = models.TextField()
+    major = models.ForeignKey(Major, blank=True, on_delete=models.CASCADE)
+    cred = models.IntegerField(default=1)
+    cataloge = models.TextField()
+
 
 class CoursePrerequisite(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="course")
@@ -90,6 +98,7 @@ class CoursePrerequisite(models.Model):
     # check if not precondition itself
 
 
+# department
 class Professor(UserAccount):
     class Meta:
         verbose_name = "professor"
@@ -109,15 +118,15 @@ class Advisor(Professor):
 
 
 class Term(models.Model):
-    numerical_id = models.IntegerField(max_length=4, unique=True, primary_key=True)
+    numerical_id = models.IntegerField(unique=True, primary_key=True)
 
 
 class Event(models.Model):
-    name = models.CharField(max_length=25)
     start = models.DateTimeField(blank=True)
     end = models.DateTimeField(blank=True)
 
 
+# term
 class TermEvent(Event):
     TYPE_CHOICES = [
         ("preregister", "preregister"),
@@ -132,6 +141,7 @@ class TermEvent(Event):
     term = models.ForeignKey(Term, related_name="events", on_delete=models.CASCADE)
 
 
+# term , course, Professor
 class Class(models.Model):
     class Schedule(models.Model):
         DAY_CHOICES = [
@@ -149,11 +159,12 @@ class Class(models.Model):
 
     course = models.ForeignKey(Course, null=False, on_delete=models.CASCADE)
     intructor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
-    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    term = models.ForeignKey(Term, on_delete=models.CASCADE, related_name="classes")
     exam_time = models.DateTimeField()
     schedule = models.ManyToManyField(Schedule)
 
 
+# class
 class ClassEvent(Event):
     TYPE_CHOICES = [
         ("midterm", "Midterm Exam"),
@@ -165,22 +176,29 @@ class ClassEvent(Event):
     class_course = models.ForeignKey(Class, related_name="events", on_delete=models.CASCADE)
 
 
+# Student
 class Student(UserAccount):
     student_id = models.CharField(max_length=15, unique=True)
     advisor = models.ForeignKey(Advisor, on_delete=models.PROTECT)
 
+    def get_enrollments_for_term(self, term_number):
+        enrollments = Enrollment.objects.filter(student=self, class_course__term__number=term_number)
+        return enrollments
 
+
+# Student, Class(term, course, professor)
 class Enrollment(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    class_course = models.ForeignKey(Class, on_delete=models.CASCADE)
-    grade = models.DecimalField(min=0, max=20, blank=True)
+    student = models.ForeignKey(Student, related_name="enrollments", on_delete=models.CASCADE)
+    class_course = models.ForeignKey(Class, related_name="enrollments", on_delete=models.CASCADE)
+    grade = models.DecimalField(max_digits=5, decimal_places=2)
+
+
 
 
 class AdvisingMessage(models.Model):
     content = models.TextField()
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     advisor = models.ForeignKey(Advisor, on_delete=models.CASCADE)
-    sender = models.ForeignKey(UserAccount, on_delete=models.CASCADE)
     created_time = models.DateTimeField(auto_now_add=True)
 
 # Notification
