@@ -11,37 +11,19 @@ class PhoneNumber(models.Model):
     phone_type = models.CharField(max_length=6, choices=PHONE_TYPES, default="Mobile")
 
 
+class Major(models.Model):
+    name = models.CharField(max_length=255)
+    requierd_credit = models.IntegerField(max_length=10)
+    cataloge = models.FileField(upload_to="/static/majors")
+
+
 class EducationalStat(models.Model):
     start_date = models.DateField()
     graduation_date = models.DateField()
-    major = models.CharField(max_length=255)
+    major = models.ForeignKey(Major, on_delete=models.SET_NULL)
     degree = models.CharField(max_length=255)
-    gpa = models.DecimalField(max_digits=5, decimal_places=2)
+    avg_grade = models.DecimalField(max_digits=5, decimal_places=2)
     institution_name = models.CharField(max_length=255)
-
-
-class Department(models.Model):
-    name = models.CharField(max_length=255)
-
-
-class Course(models.Model):
-    name = models.CharField(max_length=255)
-    department = models.ForeignKey(Department, on_delete=models.CASCADE)
-
-
-class CoursePrecondition(models.Model):
-    course = models.ForeignKey(Course, on_delete=models.CASCADE)
-    precondition = models.ManyToManyField(Course, on_delete=models.CASCADE)
-
-    # check if unique
-    # check if not precondition itself
-
-
-class Event(models.Model):
-    name = models.CharField(max_length=255)
-    date = models.DateField()
-    start_time = models.TimeField()
-    end_time = models.TimeField()
 
 
 class UserAccount(models.Model):
@@ -60,8 +42,7 @@ class UserAccount(models.Model):
     educational_stat = models.ManyToManyField(EducationalStat, blank=True)
     phone_numbers = models.ManyToManyField(PhoneNumber, blank=True)
     email_address = models.EmailField(max_length=254)
-    picture = models.ImageField(upload_to="images/")
-    address = models.CharField(max_length=255)
+    address = models.CharField(max_length=1000)
 
     def get_age(self):
         """
@@ -90,8 +71,23 @@ class UserAccount(models.Model):
         return f"{self.first_name} {self.last_name}"
 
 
-class Student(UserAccount):
-    student_id = models.CharField(max_length=15, unique=True)
+class Department(models.Model):
+    name = models.CharField(max_length=255)
+
+
+class Course(models.Model):
+    name = models.CharField(max_length=255)
+    department = models.ForeignKey(Department, on_delete=models.CASCADE)
+    major = models.ForeignKey(Major, blank=True, on_delete=models.SET_DEFAULT)
+    cred = models.IntegerField(default=1, max=10)
+    description = models.TextField()
+
+class CoursePrerequisite(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="course")
+    prerequisites = models.ManyToManyField(Course, related_name="pre_req")
+
+    # check if unique
+    # check if not precondition itself
 
 
 class Professor(UserAccount):
@@ -106,11 +102,34 @@ class Professor(UserAccount):
     ]
     rank = models.CharField(max_length=255, choices=RANK_CHOICES)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
-    intsructed_courses = models.ManyToManyField(Course, on_delete=models.CASCADE, blank=True)
 
 
 class Advisor(Professor):
     advisor_id = models.CharField(max_length=15, unique=True)
+
+
+class Term(models.Model):
+    numerical_id = models.IntegerField(max_length=4, unique=True, primary_key=True)
+
+
+class Event(models.Model):
+    name = models.CharField(max_length=25)
+    start = models.DateTimeField(blank=True)
+    end = models.DateTimeField(blank=True)
+
+
+class TermEvent(Event):
+    TYPE_CHOICES = [
+        ("preregister", "preregister"),
+        ("term", "Term"),
+        ("class", "Class"),
+        ("register", "Register"),
+        ("adjustment", "Adjustment"),
+        ("drop", "Drop"),
+        ("exams", "Exams"),
+    ]
+    name = models.CharField(choices=TYPE_CHOICES, max_length=25)
+    term = models.ForeignKey(Term, related_name="events", on_delete=models.CASCADE)
 
 
 class Class(models.Model):
@@ -124,26 +143,46 @@ class Class(models.Model):
             ("Thu", "Thursday"),
             ("Fri", "Friday"),
         ]
-        weekday = models.Choices(choices=DAY_CHOICES)
+        weekday = models.CharField(choices=DAY_CHOICES, max_length=10)
         start_time = models.TimeField()
         end_time = models.TimeField()
 
     course = models.ForeignKey(Course, null=False, on_delete=models.CASCADE)
     intructor = models.ForeignKey(Professor, null=False, on_delete=models.CASCADE)
-    schedule = models.ManyToManyField(Schedule, on_delete=models.CASCADE)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    term = models.ForeignKey(Term, on_delete=models.CASCADE)
+    exam_time = models.DateTimeField()
+    schedule = models.ManyToManyField(Schedule)
+
+
+class ClassEvent(Event):
+    TYPE_CHOICES = [
+        ("midterm", "Midterm Exam"),
+        ("final", "Final Exam"),
+        ("quiz", "Quiz"),
+        ("project", "Project"),
+    ]
+    name = models.CharField(choices=TYPE_CHOICES, max_length=25)
+    class_course = models.ForeignKey(Class, related_name="events", on_delete=models.CASCADE)
+
+
+class Student(UserAccount):
+    student_id = models.CharField(max_length=15, unique=True)
+    advisor = models.ForeignKey(Advisor, on_delete=models.PROTECT)
 
 
 class Enrollment(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     class_course = models.ForeignKey(Class, on_delete=models.CASCADE)
-    # Add other fields as needed
+    grade = models.DecimalField(min=0, max=20, blank=True)
 
 
-class AdvisingNote(models.Model):
+class AdvisingMessage(models.Model):
     content = models.TextField()
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     advisor = models.ForeignKey(Advisor, on_delete=models.CASCADE)
-    create_time = models.DateTimeField(auto_now_add=True)
-    # Add other fields as needed
+    sender = models.ForeignKey(UserAccount, on_delete=models.CASCADE)
+    created_time = models.DateTimeField(auto_now_add=True)
+
+# Notification
+# System suggestion
+#
