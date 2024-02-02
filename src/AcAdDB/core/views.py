@@ -2,17 +2,18 @@ import termios
 
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
+from django.http import HttpResponse
 from django.shortcuts import render, redirect
 
-from models import *
+from .models import *
 from requests import *
 
 CURRENT_TERM_NUMBER = 4022
 
 
-def select_user(username) -> UserAccount | Student | Professor | Advisor:
+def select_user(username) -> UserAccount:
     user = User.objects.filter(username=username).first()
-    if not user:
+    if isinstance(user, Advisor):
         return None
     return user.account
 
@@ -21,7 +22,10 @@ def select_user(username) -> UserAccount | Student | Professor | Advisor:
 
 # UserAccount
 def first_page(re):
-    pass
+    now = datetime.datetime.now()
+    html = "<html><body>It is now %s.</body></html>" % now
+    return HttpResponse(html)
+
 
 
 def forgot_password(re):
@@ -38,14 +42,13 @@ def student_dashboard(re):
     pass
 
 
-def student_info(re, s_id):
-    # user = select_user(re.user)
-    # if not user:
-    #     return redirect('landing_page_link')
+def student_info(re):
+    student = select_user(re.user).student
+    if not student:
+        return redirect('first_page_link')
 
-    student = Student.objects.filter(s_id=s_id).first()
-
-    info = {"s_id": s_id, "name": student.get_full_name(), "major": student.educational_stat.major,
+    info = {"s_id": student.s_id, "name": student.account.get_full_name(),
+            "major": student.account.educational_stat.major,
             "grade": student.get_avg(), "advisor": student.advisor,
             "cred": student.cred_count() - student.fail_cred_count()}
 
@@ -68,18 +71,17 @@ def student_info(re, s_id):
 def student_calendar(re):
     pass
 
+
 # Advisor
 def advisor_dashboard(re):
     pass
 
 
 def advisor_profile(re):
-    user = select_user(re.user)
-    # if not user:
-    #     return redirect('landing_page_link')
+    advisor = select_user(re.user).professor.advisor
+    if not advisor:
+        return redirect('first_page_link')
 
-    if not user.a_id:
-        pass
     # info = {"s_id": s_id, "name": student.get_full_name(), "major": student.educational_stat.major,
     #         "grade": student.get_avg(), "advisor": student.advisor,
     #         "cred": student.cred_count() - student.fail_cred_count()}
@@ -87,7 +89,7 @@ def advisor_profile(re):
     return (
         render(
             re,
-            # student information template
+            # advisor profile template
             {
                 # "info": info,
                 # "enrolls": enrolls

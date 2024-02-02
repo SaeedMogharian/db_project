@@ -4,6 +4,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
+
 class PhoneNumber(models.Model):
     PHONE_TYPES = (("Mobile", "Mobile"), ("Work", "Work"), ("Home", "Home"))
     phone_number = models.CharField(max_length=20)
@@ -13,13 +14,6 @@ class PhoneNumber(models.Model):
 class Major(models.Model):
     name = models.CharField(max_length=255)
     requierd_credit = models.IntegerField()
-
-
-# Chart
-class Chart(models.Model):
-    major = models.ForeignKey(Major, on_delete=models.CASCADE)
-
-    # TODO: Complete Chart
 
 
 # Major
@@ -87,8 +81,16 @@ class CoursePrerequisite(models.Model):
     # check if not precondition itself
 
 
+class Chart(models.Model):
+    major = models.OneToOneField(Major, on_delete=models.CASCADE)
+    common = models.ManyToManyField(Course)
+    core = models.ManyToManyField(Course)
+    optional = models.ManyToManyField(Course)
+    general = models.ManyToManyField(Course)
+
+
 # department
-class Professor(UserAccount):
+class Professor(models.Model):
     class Meta:
         verbose_name = "professor"
 
@@ -98,11 +100,13 @@ class Professor(UserAccount):
         ("Associative Professor", "Associative Professor"),
         ("Full Professor", "Full Professor"),
     ]
+    account = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name="professor")
     rank = models.CharField(max_length=255, choices=RANK_CHOICES)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
 
 
-class Advisor(Professor):
+class Advisor(models.Model):
+    professor = models.OneToOneField(Professor, on_delete=models.CASCADE, related_name="advisor")
     a_id = models.CharField(max_length=15, unique=True)
 
 
@@ -119,7 +123,7 @@ class Term(models.Model):
 
 
 # term
-class TermEvent(Event):
+class TermEvent(models.Model):
     TYPE_CHOICES = [
         ("preregister", "preregister"),
         ("term", "Term"),
@@ -129,6 +133,7 @@ class TermEvent(Event):
         ("drop", "Drop"),
         ("exams", "Exams"),
     ]
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="term")
     name = models.CharField(choices=TYPE_CHOICES, max_length=25)
     term = models.ForeignKey(Term, related_name="events", on_delete=models.CASCADE)
 
@@ -157,19 +162,21 @@ class Class(models.Model):
 
 
 # class
-class ClassEvent(Event):
+class ClassEvent(models.Model):
     TYPE_CHOICES = [
         ("midterm", "Midterm Exam"),
         ("final", "Final Exam"),
         ("quiz", "Quiz"),
         ("project", "Project"),
     ]
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="class_course")
     name = models.CharField(choices=TYPE_CHOICES, max_length=25)
     class_course = models.ForeignKey(Class, related_name="events", on_delete=models.CASCADE)
 
 
 # Student
-class Student(UserAccount):
+class Student(models.Model):
+    account = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name="student")
     s_id = models.CharField(max_length=15, unique=True)
     advisor = models.ForeignKey(Advisor, null=True, on_delete=models.SET_NULL)
     entery_term = models.ForeignKey(Term, null=True, on_delete=models.SET_NULL)

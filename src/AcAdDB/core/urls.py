@@ -1,7 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.conf import settings
-from views import *
+from .views import *
 
 
 urlpatterns = [
@@ -14,7 +14,7 @@ urlpatterns = [
 
     path("advisor/", advisor_dashboard, name="advisor_dashboard_link"),
     path("advisor/profile/", advisor_profile, name="advisor_profile_link"),
-    path("advisor/students/<str: s_id>/", advising_student, name="advising_student_link"),
+    path("advisor/students/<str:s_id>/", advising_student, name="advising_student_link"),
 
-    path("messaging/<str: a_id>+<str: s_id>/", advising_student, name="advising_student_link"),
+    path("messaging/<str:a_id>+<str:s_id>/", advising_student, name="advising_student_link"),
 ]
