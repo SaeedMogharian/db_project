@@ -4,9 +4,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
-
-CURRENT_TERM_NUMBER = 4022
-
 class PhoneNumber(models.Model):
     PHONE_TYPES = (("Mobile", "Mobile"), ("Work", "Work"), ("Home", "Home"))
     phone_number = models.CharField(max_length=20)
@@ -77,7 +74,7 @@ class UserAccount(models.Model):
 class Course(models.Model):
     name = models.CharField(max_length=255)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
-    major = models.ForeignKey(Major, blank=True, on_delete=models.CASCADE)
+    major = models.ForeignKey(Major, null=True, on_delete=models.SET_NULL)
     cred = models.IntegerField(default=1)
     cataloge = models.TextField()
 
@@ -106,7 +103,7 @@ class Professor(UserAccount):
 
 
 class Advisor(Professor):
-    id = models.CharField(max_length=15, unique=True)
+    a_id = models.CharField(max_length=15, unique=True)
 
 
 class Event(models.Model):
@@ -173,8 +170,9 @@ class ClassEvent(Event):
 
 # Student
 class Student(UserAccount):
-    id = models.CharField(max_length=15, unique=True)
-    advisor = models.ForeignKey(Advisor, on_delete=models.PROTECT)
+    s_id = models.CharField(max_length=15, unique=True)
+    advisor = models.ForeignKey(Advisor, null=True, on_delete=models.SET_NULL)
+    entery_term = models.ForeignKey(Term, null=True, on_delete=models.SET_NULL)
 
     def get_enrolls(self, term_number=None):
         if term_number:
@@ -187,7 +185,7 @@ class Student(UserAccount):
         return sum(g) / len(g)
 
     def advisor_messages(self, advisor_id):
-        return self.messages.filter(student=self, advisor__id=advisor_id)
+        return self.messages.filter(student=self, advisor__a_id=advisor_id)
 
     def get_events(self, term_number):
         ev = []
