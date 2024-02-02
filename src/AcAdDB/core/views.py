@@ -18,7 +18,27 @@ def select_user(username) -> UserAccount | Student | Professor | Advisor:
 
 
 # Create your views here.
-def student_information(re, s_id):
+
+# UserAccount
+def first_page(re):
+    pass
+
+
+def forgot_password(re):
+    pass
+
+
+# Both
+def messaging(re, a_id, s_id):
+    pass
+
+
+# Student
+def student_dashboard(re):
+    pass
+
+
+def student_info(re, s_id):
     # user = select_user(re.user)
     # if not user:
     #     return redirect('landing_page_link')
@@ -43,3 +63,38 @@ def student_information(re, s_id):
             }
         )
     )
+
+
+def student_calendar(re):
+    pass
+
+# Advisor
+def advisor_dashboard(re):
+    pass
+
+
+def advisor_profile(re):
+    user = select_user(re.user)
+    # if not user:
+    #     return redirect('landing_page_link')
+
+    if not user.a_id:
+        pass
+    # info = {"s_id": s_id, "name": student.get_full_name(), "major": student.educational_stat.major,
+    #         "grade": student.get_avg(), "advisor": student.advisor,
+    #         "cred": student.cred_count() - student.fail_cred_count()}
+
+    return (
+        render(
+            re,
+            # student information template
+            {
+                # "info": info,
+                # "enrolls": enrolls
+            }
+        )
+    )
+
+
+def advising_student(re, s_id):
+    pass
