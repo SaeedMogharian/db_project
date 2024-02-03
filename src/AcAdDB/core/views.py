@@ -34,8 +34,13 @@ def forgot_password(re):
 
 # Both
 def messaging(re, a_id, s_id):
-    pass
-
+    #pass
+    user = select_user(re.user)
+    student = user.Student
+    advisor = user.advisor
+    if not student and not advisor:
+        pass
+    messages = AdvisingMessage.objects.filter(student = s_id,advisor = a_id)
 
 # Student
 def student_dashboard(re):
