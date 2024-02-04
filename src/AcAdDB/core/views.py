@@ -19,6 +19,12 @@ def select_user(username) -> UserAccount:
 
 # UserAccount
 def first_page(request):
+    user = select_user(request.user)
+    if hasattr(user, 'student'):
+        return redirect('student_dashboard_link')
+    elif hasattr(user, 'professor'):
+        if hasattr(user.professor, 'advisor'):
+            return redirect('advisor_dashboard_link')
     return (
         render(
             request,
