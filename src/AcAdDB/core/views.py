@@ -10,7 +10,7 @@ CURRENT_TERM_NUMBER = "14021"
 
 def select_user(username) -> UserAccount:
     user = User.objects.filter(username=username).first()
-    if isinstance(user, Advisor):
+    if not user:
         return None
     return user.account
 
