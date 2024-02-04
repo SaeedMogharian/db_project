@@ -4,7 +4,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, redirect
 
 from .models import *
-import requests
+
 CURRENT_TERM_NUMBER = "14021"
 
 
@@ -21,7 +21,14 @@ def select_user(username) -> UserAccount:
 def first_page(re):
     now = datetime.datetime.now()
     html = "<html><body>It is now %s.</body></html>" % now
-    return HttpResponse(html)
+    return (
+        render(
+            re,
+            # first page template
+            {
+            }
+        )
+    )
 
 
 def forgot_password(re):
@@ -55,6 +62,7 @@ def student_dashboard(re):
     student = select_user(re.user).student
     if not student:
         return redirect('first_page_link')
+
     # chart avg_grade of each term
     terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
     t_avg = {}
@@ -107,18 +115,20 @@ def student_info(re):
             "major": student.account.major,
             "grade": student.get_avg(), "advisor": student.advisor,
             "cred": student.pass_cred_count()}
-
     enrolls = {}
     terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
     for i in terms:
-        enrolls[i] = student.get_enrolls(i)
+        enrolls[i] = student.get_enrolls(i.number)
+
+    failed_terms = student.get_failed_terms()
     return (
         render(
             re,
             # student information template
             {
                 "info": info,
-                "enrolls": enrolls
+                "enrolls": enrolls,
+                "failed_terms": failed_terms
             }
         )
     )
@@ -145,10 +155,25 @@ def student_calendar(re):
 
 # Advisor
 def advisor_dashboard(re):
+    advisor = select_user(re.user).professor.advisor
+    if not advisor:
+        return redirect('first_page_link')
     # table of students with over all view of their stat
-    # Term Events
+    students = advisor.student_set.all()
 
-    pass
+    # Term Events
+    t_event = Event.objects.filter(term__term__number=CURRENT_TERM_NUMBER).all()
+
+    return (
+        render(
+            re,
+            # advisor profile template
+            {
+                "events": t_event,
+                "students": students
+            }
+        )
+    )
 
 
 def advisor_profile(re):
@@ -174,10 +199,61 @@ def advisor_profile(re):
 
 
 def advising_student(re, s_id):
+    advisor = select_user(re.user).professor.advisor
+    if not advisor:
+        return redirect('first_page_link')
     # student info
+    student = Student.objects.filter(s_id=s_id)
+    info = {"s_id": student.s_id, "name": student.account.get_full_name(),
+            "major": student.account.major,
+            "grade": student.get_avg(), "advisor": student.advisor,
+            "cred": student.pass_cred_count()}
+    enrolls = {}
+    terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
+    for i in terms:
+        enrolls[i] = student.get_enrolls(i.number)
+    failed_terms = student.get_failed_terms()
     # chart of students
     # student event
     # system recommendation for next term
-    # add a recommendation for next term
+    # chart avg_grade of each term
+    terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
+    t_avg = {}
+    for i in terms:
+        t_avg[i] = student.get_avg(i.number)
+    # calendar view
+    events = student.get_events(CURRENT_TERM_NUMBER)
+    date = datetime.datetime.now()
+    # events alert
+    alert = {}
+    for e in events.iterator():
+        if e.start > date and (e.end.day - date.day) < 10:
+            if e.class_course:
+                alert[e] = f"{str(e.class_course)} is very close"
+            elif e.term:
+                alert[e] = f"{str(e.term.term)} is very close"
+
+    # recommendation for next term
+    t_count = student.term_count()
+    cred_behind = student.cred_behind()
+    possibles = student.possible_takes(CURRENT_TERM_NUMBER)
+
     # send message link
-    pass
+    return (
+        render(
+            re,
+            # advisor profile template
+            {
+                "info": info,
+                "enrolls": enrolls,
+                "t_avg": t_avg,
+                "events": events,
+                "date": date,
+                "alert": alert,
+                "t_count": t_count,
+                "cred_behind": cred_behind,
+                "possibles": possibles,
+                "failed_terms": failed_terms
+            }
+        )
+    )

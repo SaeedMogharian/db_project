@@ -312,6 +312,23 @@ class Student(models.Model):
                     po.append(x)
         return po
 
+    def last_term(self):
+        e = self.enrollments.all()
+        t = int(self.entery_term.number)
+        for i in e:
+            if int(i.class_course.term.number) > t:
+                t = int(i.class_course.term.number)
+        return t
+
+    def get_failed_terms(self):
+        failed_t = []
+        terms = list(Term.objects.filter(number__gte=self.entery_term, number__lte=self.last_term()))
+        for i in terms:
+            if self.get_avg(i) < 12:
+                failed_t.append(i)
+        return failed_t
+
+
     def __str__(self):
         return str(self.account)
 
