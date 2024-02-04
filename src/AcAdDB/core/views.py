@@ -153,7 +153,7 @@ def student_info(request):
     enrolls = {}
     terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
     for i in terms:
-        enrolls[i] = student.get_enrolls(i.number)
+        enrolls[i] = student.passed_course(i.number)
 
     failed_terms = student.get_failed_terms()
     return (
