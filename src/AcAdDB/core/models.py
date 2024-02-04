@@ -413,7 +413,7 @@ class AdvisingMessage(models.Model):
     student = models.ForeignKey(Student, related_name="messages", on_delete=models.CASCADE)
     advisor = models.ForeignKey(Advisor, related_name="messages", on_delete=models.CASCADE)
     created_time = models.DateTimeField(auto_now_add=True)
-    Sender_Choice = [("advisor", "student"), ("advisor", "advisor")]
+    Sender_Choice = [("student", "Student"), ("advisor", "Advisor")]
     sender = models.CharField(choices=Sender_Choice, max_length=10)
 
     class Meta:

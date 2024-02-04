@@ -69,7 +69,7 @@ def login_page(request):
 
 
 # Both
-def messaging(request, s_id, a_id):
+def messaging(request, a_id, s_id):
     user = select_user(request.user)
     if not user:
         return redirect('first_page_link')
@@ -84,16 +84,16 @@ def messaging(request, s_id, a_id):
     else:
         me = "advisor"
 
-    messages = AdvisingMessage.objects.filter(student__s_id=s_id, advisor__a_id=a_id).all().order_by("created_time").iterator()
+    messages = AdvisingMessage.objects.filter(student__s_id=s_id, advisor__a_id=a_id).all().order_by("created_time")
     return (
         render(
             request,
             "messaging.html",
             {
                 "s_id": s_id,
-                "s_name": Student.objects.filter(s_id=str(s_id)).first().name,
+                "s_name": Student.objects.filter(s_id=str(s_id)).first().account.get_full_name(),
                 "a_id": a_id,
-                "a_name": Advisor.objects.filter(a_id=str(a_id)).first().name,
+                "a_name": Advisor.objects.filter(a_id=str(a_id)).first().professor.account.get_full_name(),
                 "me": me,
                 "messages": messages,
             }

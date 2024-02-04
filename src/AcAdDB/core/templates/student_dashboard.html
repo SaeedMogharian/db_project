@@ -14,7 +14,7 @@
                 <ul class="navbar-nav mx-auto">
                     <li class="nav-item"><a class="nav-link active" href="{% url 'student_info_link' %}">Info</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{% url 'student_dashboard_link' %}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="{% url 'messaging_link' s_id a_id %}">Message</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'messaging_link' a_id s_id %}">Message</a></li>
                 </ul>
                 <a class="btn shadow" role="button" href={% url 'logout_link' %}>Logout</a>
             </div>

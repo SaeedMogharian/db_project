@@ -16,7 +16,7 @@
                     <div class="row mb-5">
                         <div class="col-md-8 col-xl-6 mx-auto">
                             <h2 class="fw-bold">Student {{ student.account.get_full_name }}:
-                                <a href="{% url 'messaging_link' student.s_id advisor.a_id %}">Message</a>
+                                <a href="{% url 'messaging_link' advisor.a_id student.s_id %}">Message</a>
                             </h2>
                         </div>
                     </div>
