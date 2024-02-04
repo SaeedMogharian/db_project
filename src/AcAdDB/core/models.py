@@ -2,8 +2,14 @@ import datetime
 
 from django.db import models
 from django.contrib.auth.models import User
-# from django.core.exceptions import ValidationError
 
+
+# from django.core.exceptions import ValidationError
+Degree_CHOICES = [
+        ("Bachelor", "Bachelor"),
+        ("Master", "Master"),
+        ("PhD", "PhD"),
+]
 
 class PhoneNumber(models.Model):
     PHONE_TYPES = (("Mobile", "Mobile"), ("Work", "Work"), ("Home", "Home"))
@@ -14,6 +20,7 @@ class PhoneNumber(models.Model):
         verbose_name = 'PhoneNumber'
         verbose_name_plural = "Core | PhoneNumbers"
 
+
 class Major(models.Model):
     name = models.CharField(max_length=255)
     requierd_credit = models.IntegerField()
@@ -21,27 +28,22 @@ class Major(models.Model):
     class Meta:
         verbose_name = 'Major'
         verbose_name_plural = "Edu | Majors"
+    def __str__(self):
+        return str(self.name)
 
 
-class Degree(models.Model):
-    D_CHOICES = [
-        ("Bachelor", "Bachelor"),
-        ("Master", "Master"),
-        ("PhD", "PhD"),
-    ]
-    name = models.CharField(choices=D_CHOICES, max_length=10)
-
-    class Meta:
-        verbose_name = 'Degree'
-        verbose_name_plural = "Edu | Degrees"
 
 
 class Department(models.Model):
     name = models.CharField(max_length=255)
 
+    def __str__(self):
+        return str(self.name)
+
     class Meta:
         verbose_name = 'Department'
         verbose_name_plural = "Edu | Departments"
+
 
 
 # EduStat
@@ -56,15 +58,14 @@ class UserAccount(models.Model):
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
     gender = models.CharField(max_length=1, choices=GENDER_TYPES)
-    date_of_birth = models.DateField(null=True)
+    date_of_birth = models.DateField(null=True, blank=True)
     nationality = models.CharField(max_length=255)
     national_code = models.CharField(max_length=20, unique=True)
     phone_numbers = models.ManyToManyField(PhoneNumber, blank=True)
-    email_address = models.EmailField(max_length=254)
     address = models.CharField(max_length=1000)
 
-    major = models.ForeignKey(Major, null=True, on_delete=models.SET_NULL)
-    degree = models.ForeignKey(Degree, null=True, on_delete=models.SET_NULL)
+    major = models.ForeignKey(Major, null=True, blank=True, on_delete=models.SET_NULL)
+    degree = models.CharField(choices=Degree_CHOICES, null=True, blank=True, max_length=10)
 
     def get_age(self):
         """
@@ -81,7 +82,7 @@ class UserAccount(models.Model):
         return f"{self.first_name} {self.last_name}"
 
     def __str__(self):
-        return f"Professor {str(self.get_full_name())}"
+        return f"{str(self.get_full_name())}"
 
 
 # department, major
@@ -90,7 +91,7 @@ class Course(models.Model):
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     major = models.ForeignKey(Major, null=True, on_delete=models.SET_NULL)
     cred = models.IntegerField(default=1)
-    cataloge = models.TextField()
+    cataloge = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return str(self.name)
@@ -98,6 +99,7 @@ class Course(models.Model):
     class Meta:
         verbose_name = 'Course'
         verbose_name_plural = "Edu | Course"
+
 
 class CoursePrerequisite(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="course")
@@ -113,7 +115,7 @@ class CoursePrerequisite(models.Model):
 
 class Chart(models.Model):
     major = models.OneToOneField(Major, on_delete=models.CASCADE)
-    degree = models.ForeignKey(Degree, on_delete=models.CASCADE)
+    degree = models.CharField(choices=Degree_CHOICES, max_length=10)
     courses = models.ManyToManyField(Course, related_name="chart")
 
     def r_term(self):
@@ -124,10 +126,10 @@ class Chart(models.Model):
         else:
             return 6
 
-
     class Meta:
         verbose_name = 'Chart'
         verbose_name_plural = "Edu | Charts"
+
 
 # department
 class Professor(models.Model):
@@ -169,6 +171,12 @@ class Event(models.Model):
         verbose_name = 'Event'
         verbose_name_plural = "Core | Events"
 
+    def __str__(self):
+        if hasattr(self, "term"):
+            return str(self.term_event)
+        elif hasattr(self, "class_course"):
+            return str(self.class_course)
+
 
 class Term(models.Model):
     number = models.CharField(unique=True, primary_key=True, max_length=6)
@@ -205,6 +213,10 @@ class Term(models.Model):
         verbose_name = 'Term'
         verbose_name_plural = "Edu | Terms"
 
+    def __str__(self):
+        return str(self.number)
+
+
 # term
 class TermEvent(models.Model):
     TYPE_CHOICES = [
@@ -216,16 +228,16 @@ class TermEvent(models.Model):
         ("drop", "Drop"),
         ("exams", "Exams"),
     ]
-    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="term")
+    event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="term_event")
     name = models.CharField(choices=TYPE_CHOICES, max_length=25)
     term = models.ForeignKey(Term, related_name="events", on_delete=models.CASCADE)
-
-    def __str__(self):
-        return str(self.name) + ' for this term'
 
     class Meta:
         verbose_name = 'TermEvent'
         verbose_name_plural = "Core | TermEvents"
+
+    def __str__(self):
+        return str(self.name)
 
 # term , course, Professor
 class Class(models.Model):
@@ -256,6 +268,7 @@ class Class(models.Model):
         verbose_name = 'Class'
         verbose_name_plural = "Edu | Class"
 
+
 # class
 class ClassEvent(models.Model):
     TYPE_CHOICES = [
@@ -275,12 +288,13 @@ class ClassEvent(models.Model):
         verbose_name = 'ClassEvent'
         verbose_name_plural = "Core | ClassEvents"
 
+
 # Student
 class Student(models.Model):
     account = models.OneToOneField(UserAccount, on_delete=models.CASCADE, related_name="student")
     s_id = models.CharField(max_length=15, unique=True)
-    advisor = models.ForeignKey(Advisor, null=True, on_delete=models.SET_NULL)
-    entery_term = models.ForeignKey(Term, null=True, on_delete=models.SET_NULL)
+    advisor = models.ForeignKey(Advisor, null=True, blank=True, on_delete=models.SET_NULL)
+    entery_term = models.ForeignKey(Term, null=True, blank=True, on_delete=models.SET_NULL)
 
     def get_enrolls(self, term_number=None):
         if term_number:
@@ -302,7 +316,7 @@ class Student(models.Model):
         enrolls = self.get_enrolls(term_number).values_list("class_course")
         # for x in enrolls:
         #     ev += x.class_course.events.all()
-        ev = Event.objects.filter(term__term__number=term_number).all() | Event.objects.filter(
+        ev = Event.objects.filter(term_event__term__number=term_number).all() | Event.objects.filter(
             class_course__class_course__in=enrolls)
         return ev
 
@@ -331,13 +345,13 @@ class Student(models.Model):
                 c.append(x.class_course.course)
         return c
 
-    def term_count(self, curr_num):
-        curr = Term.objects.filter(number=curr_num).first()
+    def term_count(self):
+        curr = Term.objects.filter(number=self.last_term()).first()
         return Term.terms_between(self.entery_term, curr)
 
-    def cred_behind(self, term_num):
+    def cred_behind(self):
         cred_avg = self.account.major.requierd_credit // self.account.major.chart.r_term()
-        term_count = len(self.term_count(term_num))
+        term_count = len(self.term_count())
         return self.pass_cred_count() - cred_avg * term_count
 
     def possible_takes(self, term_num):
@@ -373,13 +387,13 @@ class Student(models.Model):
                 failed_t.append(i)
         return failed_t
 
-
     def __str__(self):
         return str(self.account)
 
     class Meta:
         verbose_name = 'Student'
         verbose_name_plural = "Users | Students"
+
 
 # Student, Class(term, course, professor)
 class Enrollment(models.Model):
@@ -390,6 +404,7 @@ class Enrollment(models.Model):
     class Meta:
         verbose_name = 'Enrolls'
         verbose_name_plural = "Users | StudentEnrollment"
+
 
 class AdvisingMessage(models.Model):
     content = models.TextField()

@@ -6,7 +6,6 @@ admin.site.register(PhoneNumber)
 admin.site.register(UserAccount)
 
 admin.site.register(Major)
-admin.site.register(Degree)
 admin.site.register(Department)
 admin.site.register(Course)
 admin.site.register(CoursePrerequisite)

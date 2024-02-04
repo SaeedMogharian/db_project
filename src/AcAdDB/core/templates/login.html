@@ -20,7 +20,7 @@
                             <form action="{% url 'login_page_link' %}" method="post">
                                 {% csrf_token %}
                                 <div class="mb-3"><label>
-                                    <input class="form-control" type="email" name="email" placeholder="Email">
+                                    <input class="form-control" name="username" placeholder="Username/Email">
                                 </label></div>
                                 <div class="mb-3"><label>
                                     <input class="form-control" type="password" name="password" placeholder="Password">

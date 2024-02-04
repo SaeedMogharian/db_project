@@ -1,5 +1,5 @@
 # from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.http import Http404
 
@@ -18,29 +18,36 @@ def select_user(username) -> UserAccount:
 # Create your views here.
 
 # UserAccount
-def first_page(re):
+def first_page(request):
     return (
         render(
-            re,
+            request,
             "index.html"
         )
     )
 
 
-def login_page(re):
+def login_page(request):
     # handle login
-    if re.method == "POST":
-        if 'login_form' in re.POST:
+    # TODO: login with student code and advisor code
+    if request.method == "POST":
+        if 'login_form' in request.POST:
             user = authenticate(
-                username=re.POST['email'],
-                password=re.POST['password']
+                request,
+                username=request.POST['username'],
+                password=request.POST['password']
             )
-            if user and user.is_active:
-                login(re, user)
-                return redirect('login_page_link')
-            raise Http404("User Not Found")
+            if user:
+                login(request, user)
+                if hasattr(user.account, 'student'):
+                    return redirect('student_dashboard_link')
+                elif hasattr(user.account, 'professor'):
+                    if hasattr(user.professor, 'advisor'):
+                        return redirect('advisor_dashboard_link')
+            else:
+                raise Http404("User Not Found")
 
-    user = select_user(re.user)
+    user = select_user(request.user)
     if hasattr(user, 'student'):
         return redirect('student_dashboard_link')
     elif hasattr(user, 'professor'):
@@ -48,7 +55,7 @@ def login_page(re):
             return redirect('advisor_dashboard_link')
     return (
         render(
-            re,
+            request,
             "login.html"
         )
     )
@@ -62,8 +69,8 @@ def signup_page(re):
 
 
 # Both
-def messaging(re, a_id, s_id):
-    user = select_user(re.user)
+def messaging(request, a_id, s_id):
+    user = select_user(request.user)
     if not user:
         return redirect('first_page_link')
     student = Student.objects.filter(s_id=s_id)
@@ -74,7 +81,7 @@ def messaging(re, a_id, s_id):
 
     return (
         render(
-            re,
+            request,
             # messaging template
             {
                 "messages": messages,
@@ -84,10 +91,10 @@ def messaging(re, a_id, s_id):
 
 
 # Student
-def student_dashboard(re):
-    user = select_user(re.user)
-    # if not hasattr(user, "student"):
-    #     return redirect('first_page_link')
+def student_dashboard(request):
+    user = select_user(request.user)
+    if not hasattr(user, "student"):
+        return redirect('first_page_link')
     student = user.student
     # chart avg_grade of each term
     terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
@@ -96,7 +103,7 @@ def student_dashboard(re):
         t_avg[i] = student.get_avg(i)
     # calendar view
     events = student.get_events(CURRENT_TERM_NUMBER)
-    date = datetime.datetime.now()
+    date = datetime.datetime.now().date()
     # events alert
     alert = {}
     for e in events.iterator():
@@ -117,11 +124,13 @@ def student_dashboard(re):
 
     return (
         render(
-            re,
+            request,
             "student_dashboard.html",
             {
+                "s_id": student.s_id,
+                "a_id": student.advisor.a_id,
+                "student": student.account.get_full_name(),
                 "chart": t_avg,
-                "events": events,
                 "date": date,
                 "alert": alert,
                 "t_count": t_count,
@@ -132,8 +141,8 @@ def student_dashboard(re):
     )
 
 
-def student_info(re):
-    student = select_user(re.user).student
+def student_info(request):
+    student = select_user(request.user).student
     if not student:
         return redirect('first_page_link')
 
@@ -149,7 +158,7 @@ def student_info(re):
     failed_terms = student.get_failed_terms()
     return (
         render(
-            re,
+            request,
             # student information template
             {
                 "info": info,
@@ -160,8 +169,8 @@ def student_info(re):
     )
 
 
-def student_calendar(re):
-    student = select_user(re.user).student
+def student_calendar(request):
+    student = select_user(request.user).student
     if not student:
         return redirect('first_page_link')
 
@@ -169,7 +178,7 @@ def student_calendar(re):
     date = datetime.datetime.now()
     return (
         render(
-            re,
+            request,
             # student information template
             {
                 "events": events,
@@ -180,8 +189,8 @@ def student_calendar(re):
 
 
 # Advisor
-def advisor_dashboard(re):
-    advisor = select_user(re.user).professor.advisor
+def advisor_dashboard(request):
+    advisor = select_user(request.user).professor.advisor
     if not advisor:
         return redirect('first_page_link')
     # table of students with over all view of their stat
@@ -192,7 +201,7 @@ def advisor_dashboard(re):
 
     return (
         render(
-            re,
+            request,
             # advisor profile template
             {
                 "events": t_event,
@@ -202,8 +211,8 @@ def advisor_dashboard(re):
     )
 
 
-def advisor_profile(re):
-    advisor = select_user(re.user).professor.advisor
+def advisor_profile(request):
+    advisor = select_user(request.user).professor.advisor
     if not advisor:
         return redirect('first_page_link')
 
@@ -214,7 +223,7 @@ def advisor_profile(re):
     students = advisor.student_set.all()
     return (
         render(
-            re,
+            request,
             # advisor profile template
             {
                 "info": info,
@@ -224,8 +233,8 @@ def advisor_profile(re):
     )
 
 
-def advising_student(re, s_id):
-    advisor = select_user(re.user).professor.advisor
+def advising_student(request, s_id):
+    advisor = select_user(request.user).professor.advisor
     if not advisor:
         return redirect('first_page_link')
     # student info
@@ -267,7 +276,7 @@ def advising_student(re, s_id):
     # send message link
     return (
         render(
-            re,
+            request,
             # advisor profile template
             {
                 "info": info,
@@ -283,3 +292,8 @@ def advising_student(re, s_id):
             }
         )
     )
+
+
+def logout_view(request):
+    logout(request)
+    return redirect("first_page_link")
