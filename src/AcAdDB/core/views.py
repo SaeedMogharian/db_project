@@ -190,9 +190,12 @@ def student_calendar(request):
 
 # Advisor
 def advisor_dashboard(request):
-    advisor = select_user(request.user).professor.advisor
-    if not advisor:
+    user = select_user(request.user)
+    if not hasattr(user, "professor"):
         return redirect('first_page_link')
+    elif not hasattr(user.professor, "advisor"):
+        return redirect('first_page_link')
+    advisor = user.professor.advisor
     # table of students with over all view of their stat
     students = advisor.student_set.all()
 
@@ -202,8 +205,10 @@ def advisor_dashboard(request):
     return (
         render(
             request,
-            # advisor profile template
+            "advisor_dashboard.html",
             {
+                "a_id": advisor.a_id,
+                "advisor": advisor.professor.account.get_full_name(),
                 "events": t_event,
                 "students": students
             }

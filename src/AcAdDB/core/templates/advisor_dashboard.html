@@ -12,10 +12,8 @@
                     </svg></span><span>AAS</span></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navcol-1">
                 <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link active" href="{% url 'student_info_link' %}">Info</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="{% url 'student_dashboard_link' %}">Home</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="{% url 'student_calendar_link' %}">Calendar</a></li>
-                    <li class="nav-item"><a class="nav-link active" href="{% url 'messaging_link' s_id a_id %}">Message</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'advisor_profile_link' %}">Info</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'advisor_dashboard_link' %}">Home</a></li>
                 </ul>
                 <a class="btn shadow" role="button" href={% url 'logout_link' %}>Logout</a>
             </div>
@@ -30,45 +28,39 @@
                 <div class="container py-5">
                     <div class="row mb-5">
                         <div class="col-md-8 col-xl-6 text-center mx-auto">
-                            <h2 class="fw-bold">Wellcome {{ student }}</h2>
+                            <h2 class="fw-bold">Wellcome {{ advisor }}</h2>
                             <p class="text-muted w-lg-50">This your advising dashboard.
-                                Help yourself with the information that helps you reach your academic goals</p>
+                                Help yourself with the tool that helps you reach your advising goals</p>
                         </div>
                     </div>
-                    {# TODO: Chart of avg term #}
                     <hr>
                     <div class="row mx-auto text-center mb-2" style="max-width: 900px;">
                         <h4 class="text w-lg-50">
-                            Event Alerts
+                            Term Events
                         </h4>
                         <p class="text w-lg-50">
                             Today is: {{ date }}
                         </p>
-                        {% for a in alerts %}
+                        {% for e in events %}
                             <p class="text-muted w-lg-50">
-                                {{ a }} ({{ a.start }} - {{ a.end }}) : {{ alerts.a }}
+                                {{ e }} ({{ e.start }} - {{ e.end }})
                             </p>
                         {% endfor %}
                     </div>
                     <hr>
-                    <div class="row mx-auto mb-2" style="max-width: 900px;">
+                    <div class="row mx-auto text-center" style="max-width: 900px;">
                         <h4 class="text w-lg-50">
-                            Recommendation
+                            Students:
                         </h4>
-                        <p class="text w-lg-50">
-                            You are on your {{ t_count }}s term
-                            You need {{ cred_behind }} credit to be rightly on schedule!
-                        </p>
-                        <div class="row ms-5 mb-2">
-                            <h5 class="text w-lg-50">
-                                Your possible courses to take:
-                            </h5>
-                            {% for c in possibles %}
-                                <p class="text-muted w-lg-50">
-                                    {{ c }} : {{ c.cred }} credits
-                                </p>
-                            {% endfor %}
-                        </div>
+                    </div>
+                    <div class="row mx-auto mb-2" style="max-width: 900px;">
+                        <ul>
+                        {% for s in studens %}
+                            <li class="text-muted w-lg-50">
+                                {{ s }} --  term number:{{ s.term_count }}, average:{{ s.get_average }}, failed terms:{{ s.failed_terms }}, passed:{{ s.papassed_course }}
+                            </li>
+                        {% endfor %}
+                        </ul>
                     </div>
 
 

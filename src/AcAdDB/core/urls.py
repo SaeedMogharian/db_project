@@ -19,5 +19,5 @@ path('logout/', logout_view, name='logout_link'),
     path("advisor/profile/", advisor_profile, name="advisor_profile_link"),
     path("advisor/students/<str:s_id>/", advising_student, name="advising_student_link"),
 
-    path("messaging/<str:a_id>+<str:s_id>/", advising_student, name="messagin_link"),
+    path("messaging/<str:a_id>+<str:s_id>/", advising_student, name="messaging_link"),
 ]
