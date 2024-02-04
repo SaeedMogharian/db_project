@@ -16,14 +16,13 @@ class Major(models.Model):
     requierd_credit = models.IntegerField()
 
 
-# Major
-class EducationalStat(models.Model):
-    start_date = models.DateField()
-    graduation_date = models.DateField(null=True)
-    major = models.ForeignKey(Major, on_delete=models.CASCADE)
-    degree = models.CharField(max_length=255)
-    avg_grade = models.DecimalField(max_digits=5, decimal_places=2)
-    institution_name = models.CharField(max_length=255)
+class Degree(models.Model):
+    D_CHOICES = [
+        ("Bachelor", "Bachelor"),
+        ("Master", "Master"),
+        ("PhD", "PhD"),
+    ]
+    name = models.CharField(choices=D_CHOICES, max_length=10)
 
 
 class Department(models.Model):
@@ -44,10 +43,12 @@ class UserAccount(models.Model):
     date_of_birth = models.DateField(null=True)
     nationality = models.CharField(max_length=255)
     national_code = models.CharField(max_length=20, unique=True)
-    educational_stat = models.ManyToManyField(EducationalStat, blank=True)
     phone_numbers = models.ManyToManyField(PhoneNumber, blank=True)
     email_address = models.EmailField(max_length=254)
     address = models.CharField(max_length=1000)
+
+    major = models.ForeignKey(Major, null=True, on_delete=models.SET_NULL)
+    degree = models.ForeignKey(Degree, null=True, on_delete=models.SET_NULL)
 
     def get_age(self):
         """
@@ -63,6 +64,9 @@ class UserAccount(models.Model):
         """
         return f"{self.first_name} {self.last_name}"
 
+    def __str__(self):
+        return f"Professor {str(self.get_full_name())}"
+
 
 # department, major
 class Course(models.Model):
@@ -71,6 +75,9 @@ class Course(models.Model):
     major = models.ForeignKey(Major, null=True, on_delete=models.SET_NULL)
     cred = models.IntegerField(default=1)
     cataloge = models.TextField()
+
+    def __str__(self):
+        return str(self.name)
 
 
 class CoursePrerequisite(models.Model):
@@ -83,10 +90,14 @@ class CoursePrerequisite(models.Model):
 
 class Chart(models.Model):
     major = models.OneToOneField(Major, on_delete=models.CASCADE)
+    degree = models.ForeignKey(Degree, on_delete=models.CASCADE)
     common = models.ManyToManyField(Course)
     core = models.ManyToManyField(Course)
     optional = models.ManyToManyField(Course)
     general = models.ManyToManyField(Course)
+
+    def all_course(self):
+        a = self.core
 
 
 # department
@@ -104,10 +115,16 @@ class Professor(models.Model):
     rank = models.CharField(max_length=255, choices=RANK_CHOICES)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
 
+    def __str__(self):
+        return f"Professor {str(self.account)}"
+
 
 class Advisor(models.Model):
     professor = models.OneToOneField(Professor, on_delete=models.CASCADE, related_name="advisor")
     a_id = models.CharField(max_length=15, unique=True)
+
+    def __str__(self):
+        return f"Advisor {str(self.professor)}"
 
 
 class Event(models.Model):
@@ -116,10 +133,35 @@ class Event(models.Model):
 
 
 class Term(models.Model):
-    number = models.IntegerField(unique=True, primary_key=True)
+    number = models.CharField(unique=True, primary_key=True)
 
+    # year|term_num
     def get_term_events(self):
         return self.events.all()
+
+    def next_term_num(self, summer=False):
+        n = self.number
+        if n[-1] == "3":
+            return str(int(n[:-1]) + 1) + "1"
+        if n[-1] == "2":
+            if summer:
+                return str(int(n[:-1])) + "3"
+            else:
+                return str(int(n[:-1]) + 1) + "1"
+        if n[-1] == "1":
+            return str(int(n[:-1])) + "2"
+
+    @staticmethod
+    def terms_between(start, end):
+        if int(start.number) > int(end.number):
+            start, end = end, start
+        terms = []
+        x = start
+        while x.number != str(end.number):
+            terms.append(x.number)
+            x = x.next_term_num()
+
+        return terms
 
 
 # term
@@ -136,6 +178,9 @@ class TermEvent(models.Model):
     event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="term")
     name = models.CharField(choices=TYPE_CHOICES, max_length=25)
     term = models.ForeignKey(Term, related_name="events", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.name) + ' for this term'
 
 
 # term , course, Professor
@@ -160,6 +205,9 @@ class Class(models.Model):
     exam_time = models.DateTimeField()
     schedule = models.ManyToManyField(Schedule)
 
+    def __str__(self):
+        return str(self.course) + ' | ' + str(self.intructor)
+
 
 # class
 class ClassEvent(models.Model):
@@ -172,6 +220,9 @@ class ClassEvent(models.Model):
     event = models.OneToOneField(Event, on_delete=models.CASCADE, related_name="class_course")
     name = models.CharField(choices=TYPE_CHOICES, max_length=25)
     class_course = models.ForeignKey(Class, related_name="events", on_delete=models.CASCADE)
+
+    def __str__(self):
+        return str(self.name) + ' for ' + str(self.class_course)
 
 
 # Student
@@ -195,12 +246,15 @@ class Student(models.Model):
         return self.messages.filter(student=self, advisor__a_id=advisor_id)
 
     def get_events(self, term_number):
-        ev = []
-        term = Term.objects.filter(term_number=term_number).first()
-        ev += list(term.events.all())
-        enrolls = self.get_enrolls(term_number)
-        for x in enrolls:
-            ev += list(x.class_course.events.all())
+        # ev = []
+        # term = Term.objects.filter(term_number=term_number).first()
+        # ev += term.events.all()
+        enrolls = self.get_enrolls(term_number).values_list("class_course")
+        # for x in enrolls:
+        #     ev += x.class_course.events.all()
+        ev = Event.objects.filter(term__term__number=term_number).all() | Event.objects.filter(
+            class_course__class_course__in=enrolls)
+        return ev
 
     def cred_count(self, term_number=None):
         en = self.get_enrolls(term_number)
@@ -215,6 +269,46 @@ class Student(models.Model):
         for x in en:
             c += x.class_course.course.cred
         return c
+
+    def pass_cred_count(self, term_number=None):
+        return self.cred_count(term_number) - self.fail_cred_count(term_number)
+
+    def passed_course(self, term_number=None):
+        enrolls = self.get_enrolls(term_number)
+        c = []
+        for x in enrolls:
+            if x.grade >= 10:
+                c.append(x.class_course.course)
+        return c
+
+    def term_count(self, curr_num):
+        curr = Term.objects.filter(number=curr_num).first()
+        return Term.terms_between(self.entery_term, curr)
+
+    def cred_behind(self, term_num):
+        cred_avg = self.account.major.requierd_credit // self.account.major.chart.r_term()
+        term_count = len(self.term_count(term_num))
+        return self.pass_cred_count() - cred_avg * term_count
+
+    def possible_takes(self, term_num):
+        chart = self.account.major.chart
+        taken = self.passed_course()
+        curr = list(self.get_enrolls(term_num))
+        po = []
+        al = chart.core.all() | chart.common.all() | chart.general.all() | chart.optional.all()
+        for x in al.iterator():
+            if x not in taken and x not in curr:
+                pre_sat = True
+                for a in x.pre_req.all():
+                    if a not in taken:
+                        pre_sat = False
+                        break
+                if pre_sat:
+                    po.append(x)
+        return po
+
+    def __str__(self):
+        return str(self.account)
 
 
 # Student, Class(term, course, professor)

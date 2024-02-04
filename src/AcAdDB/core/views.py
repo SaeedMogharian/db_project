@@ -1,14 +1,11 @@
-import termios
-
-from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+# from django.contrib.auth.models import User
+# from django.contrib.auth import authenticate, login
 from django.http import HttpResponse
 from django.shortcuts import render, redirect
 
 from .models import *
-from requests import *
-
-CURRENT_TERM_NUMBER = 4022
+import requests
+CURRENT_TERM_NUMBER = "14021"
 
 
 def select_user(username) -> UserAccount:
@@ -55,7 +52,50 @@ def messaging(re, a_id, s_id):
 
 # Student
 def student_dashboard(re):
-    pass
+    student = select_user(re.user).student
+    if not student:
+        return redirect('first_page_link')
+    # chart avg_grade of each term
+    terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
+    t_avg = {}
+    for i in terms:
+        t_avg[i] = student.get_avg(i)
+    # calendar view
+    events = student.get_events(CURRENT_TERM_NUMBER)
+    date = datetime.datetime.now()
+    # events alert
+    alert = {}
+    for e in events.iterator():
+        if e.start > date and (e.end.day - date.day) < 10:
+            if e.class_course:
+                alert[e] = f"{str(e.class_course)} is very close"
+            elif e.term:
+                alert[e] = f"{str(e.term.term)} is very close"
+
+    # recommendation for next term
+    t_count = student.term_count()
+    cred_behind = student.cred_behind()
+    possibles = student.possible_takes(CURRENT_TERM_NUMBER)
+
+    # send message to advisor link
+    # student info link
+    # student all calendar link
+
+    return (
+        render(
+            re,
+            # student information template
+            {
+                "chart": t_avg,
+                "events": events,
+                "date": date,
+                "alert": alert,
+                "t_count": t_count,
+                "cred_behind": cred_behind,
+                "possibles": possibles
+            }
+        )
+    )
 
 
 def student_info(re):
@@ -64,9 +104,9 @@ def student_info(re):
         return redirect('first_page_link')
 
     info = {"s_id": student.s_id, "name": student.account.get_full_name(),
-            "major": student.account.educational_stat.major,
+            "major": student.account.major,
             "grade": student.get_avg(), "advisor": student.advisor,
-            "cred": student.cred_count() - student.fail_cred_count()}
+            "cred": student.pass_cred_count()}
 
     enrolls = {}
     terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
@@ -90,12 +130,14 @@ def student_calendar(re):
         return redirect('first_page_link')
 
     events = student.get_events(CURRENT_TERM_NUMBER)
+    date = datetime.datetime.now()
     return (
         render(
             re,
             # student information template
             {
                 "events": events,
+                "date": date
             }
         )
     )
@@ -103,6 +145,9 @@ def student_calendar(re):
 
 # Advisor
 def advisor_dashboard(re):
+    # table of students with over all view of their stat
+    # Term Events
+
     pass
 
 
@@ -112,9 +157,8 @@ def advisor_profile(re):
         return redirect('first_page_link')
 
     info = {"s_id": advisor.a_id, "name": advisor.professor.account.get_full_name(),
-            "major": advisor.professor.account.educational_stat.major,
-            "degree": advisor.professor.account.educational_stat.degree,
-            "inst_name": advisor.professor.account.educational_stat.institution_name}
+            "major": advisor.professor.account.major,
+            "degree": advisor.professor.account.degree}
 
     students = advisor.student_set.all()
     return (
@@ -130,4 +174,10 @@ def advisor_profile(re):
 
 
 def advising_student(re, s_id):
+    # student info
+    # chart of students
+    # student event
+    # system recommendation for next term
+    # add a recommendation for next term
+    # send message link
     pass
