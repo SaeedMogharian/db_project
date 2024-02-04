@@ -64,8 +64,8 @@ def login_page(request):
 # TODO: forgot password
 
 
-def signup_page(re):
-    pass
+# def signup_page(re):
+#     pass
 
 
 # Both
@@ -169,25 +169,6 @@ def student_info(request):
     )
 
 
-def student_calendar(request):
-    student = select_user(request.user).student
-    if not student:
-        return redirect('first_page_link')
-
-    events = student.get_events(CURRENT_TERM_NUMBER)
-    date = datetime.datetime.now()
-    return (
-        render(
-            request,
-            # student information template
-            {
-                "events": events,
-                "date": date
-            }
-        )
-    )
-
-
 # Advisor
 def advisor_dashboard(request):
     user = select_user(request.user)
@@ -221,9 +202,8 @@ def advisor_profile(request):
     if not advisor:
         return redirect('first_page_link')
 
-    info = {"s_id": advisor.a_id, "name": advisor.professor.account.get_full_name(),
-            "major": advisor.professor.account.major,
-            "degree": advisor.professor.account.degree}
+    info = {"a_id": advisor.a_id, "name": advisor.professor.account.get_full_name(),
+            "major": advisor.professor.account.major}
 
     students = advisor.student_set.all()
     return (
@@ -232,7 +212,7 @@ def advisor_profile(request):
             # advisor profile template
             {
                 "info": info,
-                "students": students
+                "student_count": students.count()
             }
         )
     )

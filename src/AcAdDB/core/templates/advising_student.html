@@ -57,7 +57,7 @@
                         <ul>
                         {% for s in studens %}
                             <li class="text-muted w-lg-50">
-                                <a href="">{{ s }}</a> --  term number:{{ s.term_count }}, average:{{ s.get_average }}, failed terms:{{ s.failed_terms }}, passed:{{ s.papassed_course }}
+                                {{ s }} --  term number:{{ s.term_count }}, average:{{ s.get_average }}, failed terms:{{ s.failed_terms }}, passed:{{ s.papassed_course }}
                             </li>
                         {% endfor %}
                         </ul>

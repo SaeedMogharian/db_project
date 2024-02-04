@@ -1,0 +1,46 @@
+{% extends "advisor_dashboard.html" %}
+{% load static %}
+
+{% block mainblock %}
+    <section class="py-5">
+        <div class="container py-5">
+            <section class="py-5">
+                <div class="container py-5">
+                    <div class="row mb-5">
+                        <div class="col-md-8 col-xl-6 text-center">
+                            <h2 class="fw-bold">Advisor {{ advisor }}</h2>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row mx-auto text-center mb-2" style="max-width: 900px;">
+                        <h4 class="text w-lg-50">
+                            Information
+                        </h4>
+                        <p class="text-muted w-lg-50">
+                            Advisor id: {{ info.a_id }}
+                        </p>
+                        <p class="text-muted w-lg-50">
+                            Name: {{ info.name }}
+                        </p>
+                        <p class="text-muted w-lg-50">
+                            Major: {{ info.major }}
+                        </p>
+                    </div>
+                    <hr>
+                    <div class="row mx-auto text-center" style="max-width: 900px;">
+                        <h4 class="text w-lg-50">
+                            Number of advising students: {{ studen_count }}
+                        </h4>
+                    </div>
+
+
+                </div>
+            </section>
+            <div class="row mx-auto">
+                <div class="col">
+                    <div data-reflow-type="shopping-cart"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock %}
