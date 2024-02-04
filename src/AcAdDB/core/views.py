@@ -51,7 +51,15 @@ def login_page(request):
                     if hasattr(user.account.professor, 'advisor'):
                         return redirect('advisor_dashboard_link')
             else:
-                raise Http404("User Not Found")
+                return (
+                    render(
+                        request,
+                        "login.html",
+                        {
+                            "Message": "Your don't have an account"
+                        }
+                    )
+                )
 
     user = select_user(request.user)
     if hasattr(user, 'student'):
