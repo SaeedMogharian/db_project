@@ -10,9 +10,9 @@ CURRENT_TERM_NUMBER = "14021"
 
 def select_user(username) -> UserAccount:
     user = User.objects.filter(username=username).first()
-    if not user:
-        return None
-    return user.account
+    if hasattr(user, "account"):
+        return user.account
+    return None
 
 
 # Create your views here.
@@ -41,16 +41,18 @@ def login_page(re):
             raise Http404("User Not Found")
 
     user = select_user(re.user)
-    if user.student:
+    if hasattr(user, 'student'):
         return redirect('student_dashboard_link')
-    elif user.professor.advisor:
-        return redirect('advisor_dashboard_link')
+    elif hasattr(user, 'professor'):
+        if hasattr(user.professor, 'advisor'):
+            return redirect('advisor_dashboard_link')
     return (
         render(
             re,
             "login.html"
         )
     )
+
 
 # TODO: forgot password
 
@@ -83,10 +85,10 @@ def messaging(re, a_id, s_id):
 
 # Student
 def student_dashboard(re):
-    student = select_user(re.user).student
-    if not student:
-        return redirect('first_page_link')
-
+    user = select_user(re.user)
+    # if not hasattr(user, "student"):
+    #     return redirect('first_page_link')
+    student = user.student
     # chart avg_grade of each term
     terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
     t_avg = {}
@@ -116,7 +118,7 @@ def student_dashboard(re):
     return (
         render(
             re,
-            # student information template
+            "student_dashboard.html",
             {
                 "chart": t_avg,
                 "events": events,

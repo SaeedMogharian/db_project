@@ -10,10 +10,17 @@ class PhoneNumber(models.Model):
     phone_number = models.CharField(max_length=20)
     phone_type = models.CharField(max_length=6, choices=PHONE_TYPES, default="Mobile")
 
+    class Meta:
+        verbose_name = 'PhoneNumber'
+        verbose_name_plural = "Core | PhoneNumbers"
 
 class Major(models.Model):
     name = models.CharField(max_length=255)
     requierd_credit = models.IntegerField()
+
+    class Meta:
+        verbose_name = 'Major'
+        verbose_name_plural = "Edu | Majors"
 
 
 class Degree(models.Model):
@@ -24,15 +31,24 @@ class Degree(models.Model):
     ]
     name = models.CharField(choices=D_CHOICES, max_length=10)
 
+    class Meta:
+        verbose_name = 'Degree'
+        verbose_name_plural = "Edu | Degrees"
+
 
 class Department(models.Model):
     name = models.CharField(max_length=255)
+
+    class Meta:
+        verbose_name = 'Department'
+        verbose_name_plural = "Edu | Departments"
 
 
 # EduStat
 class UserAccount(models.Model):
     class Meta:
-        verbose_name = "User"
+        verbose_name = "UserAccount"
+        verbose_name_plural = "Core | UserAccounts"
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="account")
 
@@ -79,10 +95,17 @@ class Course(models.Model):
     def __str__(self):
         return str(self.name)
 
+    class Meta:
+        verbose_name = 'Course'
+        verbose_name_plural = "Edu | Course"
 
 class CoursePrerequisite(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name="course")
     prerequisites = models.ManyToManyField(Course, related_name="pre_req")
+
+    class Meta:
+        verbose_name = 'Prerequisite'
+        verbose_name_plural = "Edu | Prerequisites"
 
     # check if unique
     # check if not precondition itself
@@ -102,10 +125,15 @@ class Chart(models.Model):
             return 6
 
 
+    class Meta:
+        verbose_name = 'Chart'
+        verbose_name_plural = "Edu | Charts"
+
 # department
 class Professor(models.Model):
     class Meta:
-        verbose_name = "professor"
+        verbose_name = 'Professor'
+        verbose_name_plural = "Users | Professors"
 
     RANK_CHOICES = [
         ("Instructor", "Instructor"),
@@ -128,10 +156,18 @@ class Advisor(models.Model):
     def __str__(self):
         return f"Advisor {str(self.professor)}"
 
+    class Meta:
+        verbose_name = 'Advisor'
+        verbose_name_plural = "Users | AdvisorProfessors"
+
 
 class Event(models.Model):
     start = models.DateTimeField(blank=True)
     end = models.DateTimeField(blank=True)
+
+    class Meta:
+        verbose_name = 'Event'
+        verbose_name_plural = "Core | Events"
 
 
 class Term(models.Model):
@@ -165,6 +201,9 @@ class Term(models.Model):
 
         return terms
 
+    class Meta:
+        verbose_name = 'Term'
+        verbose_name_plural = "Edu | Terms"
 
 # term
 class TermEvent(models.Model):
@@ -184,6 +223,9 @@ class TermEvent(models.Model):
     def __str__(self):
         return str(self.name) + ' for this term'
 
+    class Meta:
+        verbose_name = 'TermEvent'
+        verbose_name_plural = "Core | TermEvents"
 
 # term , course, Professor
 class Class(models.Model):
@@ -210,6 +252,9 @@ class Class(models.Model):
     def __str__(self):
         return str(self.course) + ' | ' + str(self.intructor)
 
+    class Meta:
+        verbose_name = 'Class'
+        verbose_name_plural = "Edu | Class"
 
 # class
 class ClassEvent(models.Model):
@@ -226,6 +271,9 @@ class ClassEvent(models.Model):
     def __str__(self):
         return str(self.name) + ' for ' + str(self.class_course)
 
+    class Meta:
+        verbose_name = 'ClassEvent'
+        verbose_name_plural = "Core | ClassEvents"
 
 # Student
 class Student(models.Model):
@@ -329,6 +377,9 @@ class Student(models.Model):
     def __str__(self):
         return str(self.account)
 
+    class Meta:
+        verbose_name = 'Student'
+        verbose_name_plural = "Users | Students"
 
 # Student, Class(term, course, professor)
 class Enrollment(models.Model):
@@ -336,6 +387,9 @@ class Enrollment(models.Model):
     class_course = models.ForeignKey(Class, related_name="enrollments", on_delete=models.CASCADE)
     grade = models.DecimalField(max_digits=5, decimal_places=2, null=True)
 
+    class Meta:
+        verbose_name = 'Enrolls'
+        verbose_name_plural = "Users | StudentEnrollment"
 
 class AdvisingMessage(models.Model):
     content = models.TextField()
@@ -345,6 +399,9 @@ class AdvisingMessage(models.Model):
     Sender_Choice = [("s", "Student"), ("a", "Advisor")]
     sender = models.CharField(choices=Sender_Choice, max_length=10)
 
+    class Meta:
+        verbose_name = 'Core'
+        verbose_name_plural = "Core | AdvisingMessages"
 # Notification
 # System suggestion
 #
