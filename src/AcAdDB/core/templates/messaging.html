@@ -56,7 +56,7 @@
                                         <div class="col d-md-flex align-items-md-end align-items-lg-center mb-5">
                                             <div>
                                                 <p class="text mb-4">
-                                                    <b>{{ m.sender }}</b>
+                                                    <b>{{ m.sender }}:</b>
                                                     {{ m.content }}
                                                 </p>
                                                 <p class="text-muted text-sm">({{ m.created_time }})</p>
@@ -64,6 +64,16 @@
                                         </div>
                                     </div>
                             {% endfor %}
+
+                            <div class="row mx-auto" style="max-width: 900px;">
+                                <form action="{% url 'messaging_link' a_id s_id%}" method="post">
+                                {% csrf_token %}
+                                <div class="mb-3 w-100 d-block col-12">
+                                    <input class="form-control w-100 d-block" type="text" name="message" placeholder="Type" autocomplete="off">
+                               </div>
+                                <div class="mb-3"><button class="btn btn-primary shadow d-block w-25 mx-auto" type="submit" name="send_message">Send</button></div>
+                            </form>
+                            </div>
                         </div>
 
 

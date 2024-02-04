@@ -77,12 +77,25 @@ def messaging(request, a_id, s_id):
         return redirect('first_page_link')
     if hasattr(user, "professor") and not hasattr(user.professor, "advisor"):
         return redirect('first_page_link')
-    # if not student or not advisor:
-    #     return redirect('first_page_link')
-    if hasattr(user, "professor"):
+    student = Student.objects.filter(s_id=str(s_id)).first()
+    advisor = Advisor.objects.filter(a_id=str(a_id)).first()
+    if not student or not advisor:
+        return redirect('first_page_link')
+    if not hasattr(user, "professor"):
         me = "student"
     else:
         me = "advisor"
+
+    if request.method == "POST":
+        if 'send_message' in request.POST:
+            AdvisingMessage.objects.create(
+                content=request.POST['message'],
+                advisor=advisor,
+                student=student,
+                sender=me
+            )
+            return redirect("messaging_link", a_id, s_id)
+
 
     messages = AdvisingMessage.objects.filter(student__s_id=s_id, advisor__a_id=a_id).all().order_by("created_time")
     return (
@@ -91,9 +104,9 @@ def messaging(request, a_id, s_id):
             "messaging.html",
             {
                 "s_id": s_id,
-                "s_name": Student.objects.filter(s_id=str(s_id)).first().account.get_full_name(),
+                "s_name": student.account.get_full_name(),
                 "a_id": a_id,
-                "a_name": Advisor.objects.filter(a_id=str(a_id)).first().professor.account.get_full_name(),
+                "a_name": advisor.professor.account.get_full_name(),
                 "me": me,
                 "messages": messages,
             }
