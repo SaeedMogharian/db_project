@@ -1,6 +1,5 @@
 # from django.contrib.auth.models import User
-# from django.contrib.auth import authenticate, login
-from django.http import HttpResponse
+from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
 
 from .models import *
@@ -19,14 +18,24 @@ def select_user(username) -> UserAccount:
 
 # UserAccount
 def first_page(re):
-    now = datetime.datetime.now()
-    html = "<html><body>It is now %s.</body></html>" % now
     return (
         render(
             re,
-            # first page template
-            {
-            }
+            "index.html"
+        )
+    )
+
+
+def login_page(re):
+    # handle login
+    if re.method == "POST":
+        if 'login_form' in re.POST:
+            pass
+
+    return (
+        render(
+            re,
+            "login.html"
         )
     )
 

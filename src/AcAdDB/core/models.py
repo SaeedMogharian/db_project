@@ -2,7 +2,7 @@ import datetime
 
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+# from django.core.exceptions import ValidationError
 
 
 class PhoneNumber(models.Model):
@@ -91,10 +91,7 @@ class CoursePrerequisite(models.Model):
 class Chart(models.Model):
     major = models.OneToOneField(Major, on_delete=models.CASCADE)
     degree = models.ForeignKey(Degree, on_delete=models.CASCADE)
-    common = models.ManyToManyField(Course)
-    core = models.ManyToManyField(Course)
-    optional = models.ManyToManyField(Course)
-    general = models.ManyToManyField(Course)
+    courses = models.ManyToManyField(Course, related_name="chart")
 
     def r_term(self):
         if self.degree == "Bachelor":
@@ -138,7 +135,7 @@ class Event(models.Model):
 
 
 class Term(models.Model):
-    number = models.CharField(unique=True, primary_key=True)
+    number = models.CharField(unique=True, primary_key=True, max_length=6)
 
     # year|term_num
     def get_term_events(self):
@@ -300,7 +297,7 @@ class Student(models.Model):
         taken = self.passed_course()
         curr = list(self.get_enrolls(term_num))
         po = []
-        al = chart.core.all() | chart.common.all() | chart.general.all() | chart.optional.all()
+        al = chart.courses.all()
         for x in al.iterator():
             if x not in taken and x not in curr:
                 pre_sat = True
