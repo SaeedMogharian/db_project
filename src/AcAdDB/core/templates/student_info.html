@@ -36,7 +36,11 @@
                             Passed credits: {{ info.cred }}
                         </p>
                          <p class="text-muted w-lg-50">
-                            Failed terms: {{ failed_terms }}
+                            Failed terms:
+                             {% for t in failed_terms %}
+                                {{ t }} -
+                             {% endfor %}
+
                         </p>
                     </div>
                     <hr>

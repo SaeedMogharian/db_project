@@ -42,7 +42,7 @@ def login_page(request):
                 if hasattr(user.account, 'student'):
                     return redirect('student_dashboard_link')
                 elif hasattr(user.account, 'professor'):
-                    if hasattr(user.professor, 'advisor'):
+                    if hasattr(user.account.professor, 'advisor'):
                         return redirect('advisor_dashboard_link')
             else:
                 raise Http404("User Not Found")
@@ -69,21 +69,32 @@ def login_page(request):
 
 
 # Both
-def messaging(request, a_id, s_id):
+def messaging(request, s_id, a_id):
     user = select_user(request.user)
     if not user:
         return redirect('first_page_link')
-    student = Student.objects.filter(s_id=s_id)
-    advisor = Advisor.objects.filter(a_id=a_id)
-    if not student and not advisor:
-        pass
-    messages = AdvisingMessage.objects.filter(student=student, advisor=advisor)
+    if not hasattr(user, "professor") and not hasattr(user, "student"):
+        return redirect('first_page_link')
+    if hasattr(user, "professor") and not hasattr(user.professor, "advisor"):
+        return redirect('first_page_link')
+    # if not student or not advisor:
+    #     return redirect('first_page_link')
+    if hasattr(user, "professor"):
+        me = "student"
+    else:
+        me = "advisor"
 
+    messages = AdvisingMessage.objects.filter(student__s_id=s_id, advisor__a_id=a_id).all().order_by("created_time").iterator()
     return (
         render(
             request,
-            # messaging template
+            "messaging.html",
             {
+                "s_id": s_id,
+                "s_name": Student.objects.filter(s_id=str(s_id)).first().name,
+                "a_id": a_id,
+                "a_name": Advisor.objects.filter(a_id=str(a_id)).first().name,
+                "me": me,
                 "messages": messages,
             }
         )
@@ -127,8 +138,8 @@ def student_dashboard(request):
             request,
             "student_dashboard.html",
             {
-                "s_id": student.s_id,
-                "a_id": student.advisor.a_id,
+                "s_id": str(student.s_id),
+                "a_id": str(student.advisor.a_id),
                 "student": student.account.get_full_name(),
                 "chart": t_avg,
                 "date": date,
@@ -159,8 +170,10 @@ def student_info(request):
     return (
         render(
             request,
-            # student information template
+            "student_info.html",
             {
+                "s_id": str(student.s_id),
+                "a_id": str(student.advisor.a_id),
                 "info": info,
                 "enrolls": enrolls,
                 "failed_terms": failed_terms
@@ -181,7 +194,7 @@ def advisor_dashboard(request):
     students = advisor.student_set.all()
 
     # Term Events
-    t_event = Event.objects.filter(term__term__number=CURRENT_TERM_NUMBER).all()
+    t_event = Event.objects.filter(term_event__term__number=CURRENT_TERM_NUMBER).all()
 
     return (
         render(
@@ -198,32 +211,41 @@ def advisor_dashboard(request):
 
 
 def advisor_profile(request):
-    advisor = select_user(request.user).professor.advisor
-    if not advisor:
+    user = select_user(request.user)
+    if not hasattr(user, "professor"):
         return redirect('first_page_link')
+    elif not hasattr(user.professor, "advisor"):
+        return redirect('first_page_link')
+    advisor = user.professor.advisor
 
     info = {"a_id": advisor.a_id, "name": advisor.professor.account.get_full_name(),
             "major": advisor.professor.account.major}
 
-    students = advisor.student_set.all()
+    students = len(list(advisor.student_set.all()))
     return (
         render(
             request,
-            # advisor profile template
+            "advisor_profile.html",
             {
                 "info": info,
-                "student_count": students.count()
+                "student_count": students
             }
         )
     )
 
 
 def advising_student(request, s_id):
-    advisor = select_user(request.user).professor.advisor
-    if not advisor:
+    user = select_user(request.user)
+    if not hasattr(user, "professor"):
         return redirect('first_page_link')
+    elif not hasattr(user.professor, "advisor"):
+        return redirect('first_page_link')
+    advisor = user.professor.advisor
     # student info
-    student = Student.objects.filter(s_id=s_id)
+    student = Student.objects.filter(s_id=s_id).first()
+    if not advisor.student_set.filter(s_id=s_id):
+        return redirect('first_page_link')
+
     info = {"s_id": student.s_id, "name": student.account.get_full_name(),
             "major": student.account.major,
             "grade": student.get_avg(), "advisor": student.advisor,
@@ -231,7 +253,7 @@ def advising_student(request, s_id):
     enrolls = {}
     terms = list(Term.objects.filter(number__gte=student.entery_term, number__lte=CURRENT_TERM_NUMBER))
     for i in terms:
-        enrolls[i] = student.get_enrolls(i.number)
+        enrolls[i] = student.passed_course(i.number)
     failed_terms = student.get_failed_terms()
     # chart of students
     # student event
@@ -243,7 +265,7 @@ def advising_student(request, s_id):
         t_avg[i] = student.get_avg(i.number)
     # calendar view
     events = student.get_events(CURRENT_TERM_NUMBER)
-    date = datetime.datetime.now()
+    date = datetime.datetime.now().date()
     # events alert
     alert = {}
     for e in events.iterator():
@@ -262,12 +284,13 @@ def advising_student(request, s_id):
     return (
         render(
             request,
-            # advisor profile template
+            "advising_student.html",
             {
+                "advisor": advisor,
+                "student": student,
                 "info": info,
                 "enrolls": enrolls,
                 "t_avg": t_avg,
-                "events": events,
                 "date": date,
                 "alert": alert,
                 "t_count": t_count,

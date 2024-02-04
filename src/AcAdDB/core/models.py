@@ -304,7 +304,9 @@ class Student(models.Model):
     def get_avg(self, term_number=None):
         en = self.get_enrolls(term_number=term_number)
         g = list(en.values_list("grade", flat=True))
-        return sum(g) / len(g)
+        if len(g)!=0:
+            return sum(g) / len(g)
+        return 0
 
     def advisor_messages(self, advisor_id):
         return self.messages.filter(student=self, advisor__a_id=advisor_id)
@@ -384,7 +386,7 @@ class Student(models.Model):
         terms = list(Term.objects.filter(number__gte=self.entery_term, number__lte=self.last_term()))
         for i in terms:
             if self.get_avg(i) < 12:
-                failed_t.append(i)
+                failed_t.append(i.number)
         return failed_t
 
     def __str__(self):
@@ -411,7 +413,7 @@ class AdvisingMessage(models.Model):
     student = models.ForeignKey(Student, related_name="messages", on_delete=models.CASCADE)
     advisor = models.ForeignKey(Advisor, related_name="messages", on_delete=models.CASCADE)
     created_time = models.DateTimeField(auto_now_add=True)
-    Sender_Choice = [("s", "Student"), ("a", "Advisor")]
+    Sender_Choice = [("advisor", "student"), ("advisor", "advisor")]
     sender = models.CharField(choices=Sender_Choice, max_length=10)
 
     class Meta:

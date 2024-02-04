@@ -12,7 +12,7 @@
                     </svg></span><span>AAS</span></a><button data-bs-toggle="collapse" class="navbar-toggler" data-bs-target="#navcol-1"><span class="visually-hidden">Toggle navigation</span><span class="navbar-toggler-icon"></span></button>
             <div class="collapse navbar-collapse" id="navcol-1">
                 <ul class="navbar-nav mx-auto">
-                    <li class="nav-item"><a class="nav-link active" href="{% url 'advisor_profile_link' %}">Info</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'advisor_profile_link' %}">Profile</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{% url 'advisor_dashboard_link' %}">Home</a></li>
                 </ul>
                 <a class="btn shadow" role="button" href={% url 'logout_link' %}>Logout</a>
@@ -55,9 +55,9 @@
                     </div>
                     <div class="row mx-auto mb-2" style="max-width: 900px;">
                         <ul>
-                        {% for s in studens %}
+                        {% for s in students %}
                             <li class="text-muted w-lg-50">
-                                <a href="">{{ s }}</a> --  term number:{{ s.term_count }}, average:{{ s.get_average }}, failed terms:{{ s.failed_terms }}, passed:{{ s.papassed_course }}
+                                <a href="{% url 'advising_student_link' s.s_id %}">{{ s }}</a> --  term number:{{ s.term_count }}, average:{{ s.get_average }}, failed terms:{{ s.failed_terms }}, passed:{{ s.papassed_course }}
                             </li>
                         {% endfor %}
                         </ul>
