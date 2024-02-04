@@ -1,6 +1,7 @@
 # from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.shortcuts import render, redirect
+from django.http import Http404
 
 from .models import *
 
@@ -30,8 +31,20 @@ def login_page(re):
     # handle login
     if re.method == "POST":
         if 'login_form' in re.POST:
-            pass
+            user = authenticate(
+                username=re.POST['email'],
+                password=re.POST['password']
+            )
+            if user and user.is_active:
+                login(re, user)
+                return redirect('login_page_link')
+            raise Http404("User Not Found")
 
+    user = select_user(re.user)
+    if user.student:
+        return redirect('student_dashboard_link')
+    elif user.professor.advisor:
+        return redirect('advisor_dashboard_link')
     return (
         render(
             re,
@@ -39,8 +52,10 @@ def login_page(re):
         )
     )
 
+# TODO: forgot password
 
-def forgot_password(re):
+
+def signup_page(re):
     pass
 
 
