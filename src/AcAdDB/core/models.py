@@ -96,8 +96,13 @@ class Chart(models.Model):
     optional = models.ManyToManyField(Course)
     general = models.ManyToManyField(Course)
 
-    def all_course(self):
-        a = self.core
+    def r_term(self):
+        if self.degree == "Bachelor":
+            return 8
+        elif self.degree == "Master":
+            return 4
+        else:
+            return 6
 
 
 # department
