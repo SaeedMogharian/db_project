@@ -95,6 +95,8 @@ def messaging(request, a_id, s_id):
     advisor = Advisor.objects.filter(a_id=str(a_id)).first()
     if not student or not advisor:
         return redirect('first_page_link')
+    if not advisor.student_set.filter(s_id=s_id):
+        return redirect('first_page_link')
     if not hasattr(user, "professor"):
         me = "student"
     else:
