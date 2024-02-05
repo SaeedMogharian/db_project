@@ -174,6 +174,7 @@ class Event(models.Model):
             return str(self.term_event)
         elif hasattr(self, "class_course"):
             return str(self.class_course)
+        return str(self.start)
 
 
 class Term(models.Model):
@@ -183,8 +184,9 @@ class Term(models.Model):
     def get_term_events(self):
         return self.events.all()
 
-    def next_term_num(self, summer=False):
-        n = self.number
+    @staticmethod
+    def next_term_num(n, summer=False):
+        n = str(n)
         if n[-1] == "3":
             return str(int(n[:-1]) + 1) + "1"
         if n[-1] == "2":
@@ -201,9 +203,9 @@ class Term(models.Model):
             start, end = end, start
         terms = []
         x = start
-        while x.number != str(end.number):
-            terms.append(x.number)
-            x = x.next_term_num()
+        while x != str(end.number):
+            terms.append(x)
+            x = Term.next_term_num(x)
 
         return terms
 
@@ -257,7 +259,7 @@ class Class(models.Model):
     intructor = models.ForeignKey(Professor, null=False, related_name="classes", on_delete=models.CASCADE)
     term = models.ForeignKey(Term, on_delete=models.CASCADE, related_name="classes")
     exam_time = models.DateTimeField()
-    schedule = models.ManyToManyField(Schedule)
+    schedule = models.ManyToManyField(Schedule, blank=True, null=True)
 
     def __str__(self):
         return str(self.course) + ' | ' + str(self.intructor)

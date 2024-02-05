@@ -5,7 +5,7 @@ from django.http import Http404
 
 from .models import *
 
-CURRENT_TERM_NUMBER = "14021"
+CURRENT_TERM_NUMBER = "4021"
 
 
 def select_user(username) -> UserAccount:
@@ -154,7 +154,7 @@ def student_dashboard(request):
                 alert[e] = f"{str(e.term.term)} is very close"
 
     # recommendation for next term
-    t_count = student.term_count()
+    t_count = len(list(student.term_count()))
     cred_behind = student.cred_behind()
     possibles = student.possible_takes(CURRENT_TERM_NUMBER)
 
@@ -257,6 +257,7 @@ def advisor_profile(request):
             request,
             "advisor_profile.html",
             {
+                "advisor": advisor.professor.account.get_full_name(),
                 "info": info,
                 "student_count": students
             }
