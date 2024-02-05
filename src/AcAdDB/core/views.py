@@ -228,6 +228,7 @@ def advisor_dashboard(request):
             request,
             "advisor_dashboard.html",
             {
+                "date": datetime.datetime.now().date(),
                 "a_id": advisor.a_id,
                 "advisor": advisor.professor.account.get_full_name(),
                 "events": t_event,

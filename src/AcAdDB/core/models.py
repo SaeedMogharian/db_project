@@ -28,10 +28,9 @@ class Major(models.Model):
     class Meta:
         verbose_name = 'Major'
         verbose_name_plural = "Edu | Majors"
+    
     def __str__(self):
         return str(self.name)
-
-
 
 
 class Department(models.Model):
@@ -43,7 +42,6 @@ class Department(models.Model):
     class Meta:
         verbose_name = 'Department'
         verbose_name_plural = "Edu | Departments"
-
 
 
 # EduStat
