@@ -298,9 +298,9 @@ def advising_student(request, s_id):
     alert = {}
     for e in events.iterator():
         if e.start > date and (e.end.day - date.day) < 10:
-            if e.class_course:
+            if hasattr(e,"class_course"):
                 alert[e] = f"{str(e.class_course)} is very close"
-            elif e.term:
+            elif hasattr(e,"term"):
                 alert[e] = f"{str(e.term.term)} is very close"
 
     # recommendation for next term
